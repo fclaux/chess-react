@@ -1,71 +1,89 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ChessBoard as ChessBoardClass } from "../../models/ChessBoard";
 import { Piece as PieceModel } from "../../models/Piece";
+import { Position } from "../../models/Position";
 import "./ChessBoard.css";
 import ChessCell from "./ChessCell";
-import { Position } from "../../models/Position";
 
 export default function ChessBoard() {
     const chessRef = useRef<ChessBoardClass | null>(null);
     const [boardPieces, setBoardPieces] = useState<PieceModel[]>([]);
+    const [selectedPiece, setSelectedPiece] = useState<PieceModel | null>(null);
 
+    // Initialisation du plateau
     useEffect(() => {
-        chessRef.current = new ChessBoardClass();
-        setBoardPieces(chessRef.current.getAllPieces());
+        const board = new ChessBoardClass();
+        chessRef.current = board;
+        setBoardPieces(board.getAllPieces());
     }, []);
 
-    const onPieceClick = (piece?: PieceModel) => {
-        //Reset les highlights
-        const cells = document.getElementsByClassName("cell");
-        for (let i = 0; i < cells.length; i++) {
-            cells[i].classList.remove("possible-move", "selected-piece");
-        }
+    const onPieceClick = (
+        e: React.MouseEvent<HTMLDivElement>,
+        piece?: PieceModel
+    ) => {
+        const cell = e.currentTarget;
+        if (!cell || !chessRef.current) return;
 
-        if (!piece) {
+        const possibleCase = cell.classList.contains("possible-move");
+        resetHUD();
+        console.log("Cell clicked :",  cell);
+        
+        // Si une pièce est sélectionnée et qu'on clique sur une case possible
+        if (selectedPiece && possibleCase) {
+            console.log("Déplacement de la pièce");
+            
+            const [_, x, y] = cell.id.split("-");
+            const targetPosition = new Position(parseInt(x), parseInt(y));
+
+            selectedPiece.moveTo(targetPosition);
+
+            // ✅ On met à jour le state pour forcer un re-render
+            setBoardPieces([...chessRef.current.getAllPieces()]);
+            setSelectedPiece(null);
             return;
         }
 
-        // Mettre la cellule en surbrillance
-        const cell = document.getElementsByClassName("cell")[
-            piece.getPosition().y * 8 + piece.getPosition().x
-        ];
+        if (!piece) return;
+        
+
+        // Sélection d’une pièce
         cell.classList.add("selected-piece");
+        setSelectedPiece(piece);
 
+        const board = chessRef.current.getBoard();
+        const acceptablePositions = piece.getPossibleMoves(board);
 
-        const board =
-            (chessRef.current
-                ?.getBoard()
-                .map((row) =>
-                    row.filter((cell) => cell !== null)
-                ) as PieceModel[][]) ?? [];
-        const acceptablePosition = piece.getPossibleMoves(board);
-
-        for (const pos in acceptablePosition) {
-            //Récup la key de la cell pour modifier sa couleur
-            const cell =
-                document.getElementsByClassName("cell")[
-                    acceptablePosition[pos].y * 8 + acceptablePosition[pos].x
-                ];
-            cell.classList.add("possible-move");
+        for (const pos of acceptablePositions) {
+            
+            const cellEl = document.getElementById(`cell-${pos.x}-${pos.y}`);
+            if (cellEl) cellEl.classList.add("possible-move");
         }
     };
 
+    function resetHUD() {
+        const cells = document.querySelectorAll(".cell");
+        cells.forEach((cell) =>
+            cell.classList.remove("possible-move", "selected-piece")
+        );
+    }
+
     return (
         <div className="chessboard">
-            {chessRef.current &&
-                Array.from({ length: 8 }).map((_, y) =>
-                    Array.from({ length: 8 }).map((_, x) => {
-                        const position = new Position(x, y);
-                        const piece = chessRef.current!.getPieceAt(position);
-
-                        return ChessCell(
-                            x,
-                            y,
-                            () => onPieceClick(piece ?? undefined),
-                            piece ?? undefined
-                        );
-                    })
-                )}
+            {Array.from({ length: 8 }).map((_, y) =>
+                Array.from({ length: 8 }).map((_, x) => {
+                    const position = new Position(x, y);
+                    const piece = chessRef.current?.getPieceAt(position);
+                    return (
+                        <ChessCell
+                            key={`cell-${x}-${y}`}
+                            x={x}
+                            y={y}
+                            onClick={(e) => onPieceClick(e, piece ?? undefined)}
+                            piece={piece ?? undefined}
+                        />
+                    )
+                })
+            )}
         </div>
     );
 }

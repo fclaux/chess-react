@@ -30,5 +30,5 @@ export abstract class Piece {
         this.position = newPosition;
     }
 
-    abstract getPossibleMoves(board: Piece[][]): Position[];
+    abstract getPossibleMoves(board: (Piece|null)[][]): Position[];
 }
