@@ -2,13 +2,19 @@ import React from "react";
 import { Piece as PieceModel } from "../../models/Piece";
 import "./ChessCell.css";
 
-export default function ChessCell(x: number, y: number, onClick: () => void, piece?: PieceModel) {
+type ChessCellProps = {
+    x: number;
+    y: number;
+    piece?: PieceModel;
+    onClick: (e: React.MouseEvent<HTMLDivElement>) => void;
+};
 
+export default function ChessCell({ x, y, piece, onClick }: ChessCellProps) {
     const isWhite = (x + y) % 2 === 0;
 
     return (
         <div
-            key={`${x}-${y}`}
+            id={`cell-${x}-${y}`}
             className={`cell ${isWhite ? "white" : "black"}`}
             onClick={onClick}
         >
@@ -16,7 +22,7 @@ export default function ChessCell(x: number, y: number, onClick: () => void, pie
                 <img
                     src={piece.getImageUrl()}
                     alt={`${piece.getColor()}-${piece.getType()}`}
-                    draggable="false"
+                    draggable={false}
                     className="piece"
                 />
             )}

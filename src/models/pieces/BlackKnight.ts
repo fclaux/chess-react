@@ -10,11 +10,21 @@ export class BlackKnight extends BlackPiece {
     getPossibleMoves(): Position[] {
         const { x, y } = this.position;
         const movesOffsets = [
-            [1, 2], [2, 1], [2, -1], [1, -2],
-            [-1, -2], [-2, -1], [-2, 1], [-1, 2]
+            [1, 2],
+            [2, 1],
+            [2, -1],
+            [1, -2],
+            [-1, -2],
+            [-2, -1],
+            [-2, 1],
+            [-1, 2],
         ];
         return movesOffsets
-            .map(([dx, dy]) => new Position(x + dx, y + dy))
-            .filter(pos => pos.x >= 0 && pos.x <= 7 && pos.y >= 0 && pos.y <= 7);
+            .filter(([dx, dy]) => {
+                const newX = x + dx;
+                const newY = y + dy;
+                return newX >= 0 && newX <= 7 && newY >= 0 && newY <= 7;
+            })
+            .map(([dx, dy]) => new Position(x + dx, y + dy));
     }
 }
